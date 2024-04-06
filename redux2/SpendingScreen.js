@@ -18,10 +18,32 @@ const SpendingScreen = () => {
     const [des, setDes] = useState('');
     const [date, setDate] = useState('');
     const [amount, setAmount] = useState('');
+    const [search1, setSearch] = useState('');
+
+
+    const tongThu = () => {
+        let thu = 0;
+        listSpending.forEach(item => {
+            if (item.typeSpending == 1) {
+                thu += parseFloat(item.amount);
+            }
+        });
+        return thu;
+    };
+
+    const tongChi = () => {
+        let chi = 0;
+        listSpending.forEach(item => {
+            if (item.typeSpending == 2) {
+                chi += parseFloat(item.amount);
+            }
+        });
+        return chi;
+    };
 
     const radioButtons = useMemo(() => ([
         {
-            id: '1', // acts as primary key, should be unique and non-empty string
+            id: '1', 
             label: 'Thu',
             value: 'option1'
         },
@@ -40,7 +62,7 @@ const SpendingScreen = () => {
     const handleDeleteSpending = (id) => {
         dispatch(deleteSpendingApi(id))
             .then((result) => {
-                console.log('Spending deleted successfully');
+                console.log('Thành công');
 
             })
             .catch((error) => {
@@ -50,7 +72,7 @@ const SpendingScreen = () => {
 
     }
     const doUpdate = (row) => {
-       setSelectedItem(row);
+        setSelectedItem(row);
         setTitle(row.title);
         setDes(row.des);
         setDate(row.date);
@@ -67,8 +89,51 @@ const SpendingScreen = () => {
         dispatch(updateSpendingApi({ id: selectedItem.id, title: title, des: des, date: date, typeSpending: selectedId, amount: amount }));
         setModalVisible(false);
     };
+
+
+    const handleSearch1 = () => {
+        if (search1.trim() === '') {
+            alert("Vui lòng nhập từ khóa tìm kiếm.");
+            return;
+        }
+
+        const seenTitles = {};
+
+        const filteredStores = listSpending.filter(store => {
+            if (store.title.toLowerCase().includes(search1.toLowerCase())) {
+                if (!seenTitles[store.title]) {
+
+                    seenTitles[store.title] = true;
+                    return true;
+                }
+            }
+
+            return false;
+        });
+
+
+        if (filteredStores.length === 0) {
+            alert("Không tìm thấy cửa hàng phù hợp.");
+        } else {
+            const result = filteredStores.map(store => {
+                let totalThu = 0;
+                let totalChi = 0;
+                listSpending.forEach(item => {
+                    if (item.typeSpending == 1 && item.title === store.title) {
+                        totalThu += parseFloat(item.amount);
+                    } else if (item.typeSpending == 2 && item.title === store.title) {
+                        totalChi += parseFloat(item.amount);
+                    }
+                });
+                return `${store.title}: Số tiền thu : ${totalThu} - Số tiền chi : ${totalChi}`;
+            });
+            alert(result);
+        }
+    }
     return (
         <View>
+            <Text>Tiền thu: {tongThu()}</Text>
+            <Text>Tiền chi: {tongChi()}</Text>
             <TextInput style={styles.input} placeholder="Tiêu đề" onChangeText={(txt) => setTitle(txt)} />
             <TextInput style={styles.input} placeholder="Mô tả" onChangeText={(txt) => setDes(txt)} />
             <TextInput style={styles.input} placeholder="Ngày thu chi" onChangeText={(txt) => setDate(txt)} />
@@ -82,12 +147,13 @@ const SpendingScreen = () => {
                 />
             </View>
             <TextInput style={styles.input} placeholder="Tổng tiền" onChangeText={(txt) => setAmount(txt)} />
-            {/* <View style={{ flexDirection: 'row', width: '100%', alignItems: 'center' }}>
+
+            <View style={{ flexDirection: 'row', width: '100%', alignItems: 'center' }}>
                 <TextInput style={styles.inputSearch} placeholder='Tìm kiếm' onChangeText={(txt) => setSearch(txt)} />
-                <TouchableOpacity style={{ padding: 7, backgroundColor: 'blue', borderRadius: 4 }} onPress={() => handleSearch()}>
+                <TouchableOpacity style={{ padding: 7, backgroundColor: 'blue', borderRadius: 4 }} onPress={() => handleSearch1()}>
                     <Text style={{ color: 'white' }}>Xác nhận</Text>
                 </TouchableOpacity>
-            </View> */}
+            </View>
             <Button title="Thêm" onPress={() => handleAddSpending()} />
             {
                 listSpending.map(row => (
